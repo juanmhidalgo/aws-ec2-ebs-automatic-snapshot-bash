@@ -29,7 +29,7 @@ set -o pipefail
 
 	## 1) IAM USER:
 	#
-	# This script requires that a new IAM user be created in the IAM section of AWS. 
+	# This script requires that a new IAM user be created in the IAM section of AWS.
 	# Here is a sample IAM policy for AWS permissions that this new user will require:
 	#
 	# {
@@ -55,7 +55,7 @@ set -o pipefail
 	# }
 
 
-	## 2) AWS CLI: 
+	## 2) AWS CLI:
 	#
 	# This script requires the AWS CLI tools to be installed.
 	# Read more about AWS CLI at: https://aws.amazon.com/cli/
@@ -66,7 +66,7 @@ set -o pipefail
 	# - Install Python pip (e.g. yum install python-pip or apt-get install python-pip)
 	# - Then run: pip install awscli
 	#
-	# Configure AWS CLI by running this command: 
+	# Configure AWS CLI by running this command:
 	#		aws configure
 	#
 	# [NOTE: if you have an IAM Role Setup for your instance to use the IAM policy listed above, you can skip the aws configure step.]
@@ -96,11 +96,11 @@ instance_id=$(wget -q -O- http://169.254.169.254/latest/meta-data/instance-id)
 region=$(wget -q -O- http://169.254.169.254/latest/meta-data/placement/availability-zone | sed -e 's/\([1-9]\).$/\1/g')
 
 # Set Logging Options
-logfile="/var/log/ebs-snapshot.log"
+logfile="/home/ec2-user/ebs-snapshot.log"
 logfile_max_lines="5000"
 
 # How many days do you wish to retain backups for? Default: 7 days
-retention_days="7"
+retention_days="4"
 retention_date_in_seconds=$(date +%s --date "$retention_days days ago")
 
 
@@ -108,6 +108,13 @@ retention_date_in_seconds=$(date +%s --date "$retention_days days ago")
 
 # Function: Setup logfile and redirect stdout/stderr.
 log_setup() {
+
+    logdir=`dirname $logfile`
+
+    if [[ ! -f $logdir ]]; then
+        mkdir -p $logdir
+    fi
+
     # Check if logfile exists and is writable.
     ( [ -e "$logfile" ] || touch "$logfile" ) && [ ! -w "$logfile" ] && echo "ERROR: Cannot write to $logfile. Check permissions or sudo access." && exit 1
 
@@ -141,7 +148,7 @@ snapshot_volumes() {
 
 		snapshot_id=$(aws ec2 create-snapshot --region $region --output=text --description $snapshot_description --volume-id $volume_id --query SnapshotId)
 		log "New snapshot is $snapshot_id"
-	 
+
 		# Add a "CreatedBy:AutomatedBackup" tag to the resulting snapshot.
 		# Why? Because we only want to purge snapshots taken by the script later, and not delete snapshots manually taken.
 		aws ec2 create-tags --region $region --resource $snapshot_id --tags Key=CreatedBy,Value=AutomatedBackup
@@ -167,7 +174,7 @@ cleanup_snapshots() {
 			fi
 		done
 	done
-}	
+}
 
 
 ## SCRIPT COMMANDS ##
