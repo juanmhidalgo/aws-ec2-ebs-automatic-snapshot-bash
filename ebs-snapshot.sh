@@ -100,7 +100,7 @@ logfile="/home/ec2-user/ebs-snapshot.log"
 logfile_max_lines="5000"
 
 # How many days do you wish to retain backups for? Default: 7 days
-retention_days="4"
+retention_days="7"
 retention_date_in_seconds=$(date +%s --date "$retention_days days ago")
 
 
